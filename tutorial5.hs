@@ -178,13 +178,13 @@ zipMatrixWith f m1 m2 = mapMatrix (uncurry f) (zipMatrix m1 m2)
 zipMatrix ::[[a]] -> [[b]] -> [[(a,b)]]
 zipMatrix m1 m2 = [zip (m1!!k) (m2!!k) | k<-[0..length m1 -1]]  
 
-indexedMatrix:: Matrix -> [[(a,b)]]
-indexedMatrix m = zipMatrix m (indexMatrix (matrixHeight m) (matrixWidth m))
+indexedMatrix:: Matrix -> [[((Int,Int),Rational)]]
+indexedMatrix m = zipMatrix (indexMatrix (matrixHeight m) (matrixWidth m)) m
 
-indexMatrix:: Int -> Int -> [[Rational]]
-indexMatrix m n = helperRec n [1..m*n]
+indexMatrix:: Int -> Int -> [[(Int,Int)]]
+indexMatrix m n = helperRec n [(x,y) | x<-[1..m], y<-[1..n]]
     where 
-        helperRec:: Int -> [Rational] -> [[Rational]]
+        helperRec:: Int -> [(Int,Int)] -> [[(Int,Int)]]
         helperRec _ [] = []
         helperRec n l = take n l: helperRec n (drop n l)
 
@@ -195,14 +195,17 @@ removes xs = [x ++ (tail y) |k <- [0..length xs-1], let (x,y) = splitAt k xs]
 
 -- Produce a matrix of minors from a given matrix
 minors :: Matrix -> [[Matrix]]
-minors m = undefined
+minors m = splitEach (matrixHeight m) [minor m (i,j) | i<-[1..matrixHeight m], j<-[1..matrixWidth m]]
+--    where
+minor:: Matrix -> (Int,Int) -> Matrix
+minor m (i',j') = if matrixHeight m < 3 then m else splitEach (matrixHeight m -1)[ k | ((i,j),k) <- (concat (indexedMatrix m)), i/=i', j/=j' ]
 
 -- A matrix where element a_ij = (-1)^(i + j)
 signMatrix :: Int -> Int -> Matrix
 signMatrix w h = undefined
         
 determinant :: Matrix -> Rational
-determinant = undefined
+determinant m = (minors m)
 
 cofactors :: Matrix -> Matrix
 cofactors m = undefined        
@@ -228,3 +231,7 @@ prop_inverse3 :: Triple Rational ->
                  Triple Rational ->
                  Property
 prop_inverse3 r1 r2 r3 = undefined
+
+splitEach :: Int -> [a] -> [[a]]
+splitEach _ [] = []
+splitEach n xs = take n xs : splitEach n (drop n xs)
